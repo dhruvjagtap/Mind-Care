@@ -1,0 +1,26 @@
+.
+├── analysis_options.yaml
+├── digital_mental_health_app.iml
+├── firebase.json
+├── lib
+│   ├── core
+│   │   └── share
+│   ├── feature
+│   │   ├── auth
+│   │   │   ├── data
+│   │   │   │   └── auth_service.dart
+│   │   │   └── presentation
+│   │   │       ├── auth_checker.dart
+│   │   │       ├── auth_provider.dart
+│   │   │       └── login_screen.dart
+│   │   └── home
+│   │       └── home_screen.dart
+│   ├── firebase_options.dart
+│   └── main.dart
+├── pubspec.lock
+├── pubspec.yaml
+├── README.md
+├── remember.txt
+└── structure.txt
+
+9 directories, 15 files
