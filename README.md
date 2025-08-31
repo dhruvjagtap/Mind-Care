@@ -66,7 +66,6 @@ flutter pub get
 
 ### 3. Run the App
 ``` sh
-Copy code
 flutter run
 ```
 ---
