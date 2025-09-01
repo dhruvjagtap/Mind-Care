@@ -43,3 +43,4 @@ this will generate this file lib/firebase_options.dart
 
 ssh commands 
 dhruv-jagtap@dhruv:~/digital_mental_health_app$ ssh-keygen -t ed25519 -C "jagtapdhruv6@gmail.com"
+
