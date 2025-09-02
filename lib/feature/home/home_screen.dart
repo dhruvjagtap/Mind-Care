@@ -1,16 +1,56 @@
 import 'package:digital_mental_health_app/feature/profile/profile_screen.dart';
+import 'package:digital_mental_health_app/feature/resources/presenetation/resources_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 // import 'package:firebase_auth/firebase_auth.dart';
 import '../auth/presentation/auth_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../chatbot/chat_bot_screen.dart';
 
-class HomeScreen extends ConsumerWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
+  @override
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  bool _showMoodCheck = false;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  void initState() {
+    super.initState();
+    _checkMoodVisibility();
+  }
+
+  Future<void> _saveMoodCheck() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(
+      "last_mood_check",
+      DateTime.now().millisecondsSinceEpoch,
+    );
+
+    setState(() {
+      _showMoodCheck = false;
+    });
+  }
+
+  Future<void> _checkMoodVisibility() async {
+    final prefs = await SharedPreferences.getInstance();
+    final lastCheckIn = prefs.getInt("last_mood_check") ?? 0;
+
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final oneHour = 60 * 60 * 1000;
+
+    setState(() {
+      _showMoodCheck = (now - lastCheckIn) >= oneHour;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     // final user = ref.watch(authStateProvider).value;
     final theme = Theme.of(context);
+    // final auth = ref.read(authServiceProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -46,11 +86,23 @@ class HomeScreen extends ConsumerWidget {
                 crossAxisSpacing: 12,
                 mainAxisSpacing: 12,
                 children: [
-                  _buildFeatureCard(context, Icons.chat, "AI Chatbot", () {
+                  _buildFeatureCard(context, Icons.chat, "Lumi", () {
                     // Navigate to Chatbot screen
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ChatbotScreen(),
+                      ),
+                    );
                   }),
                   _buildFeatureCard(context, Icons.book, "Resources", () {
                     // Navigate to Resources screen
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ResourcesScreen(),
+                      ),
+                    );
                   }),
                   _buildFeatureCard(context, Icons.forum, "Peer Forum", () {
                     // Navigate to Forum screen
@@ -85,7 +137,8 @@ class HomeScreen extends ConsumerWidget {
                 child: ListView(
                   scrollDirection: Axis.vertical,
                   children: [
-                    _buildMoodCheckIn(theme),
+                    // Mood Check
+                    if (_showMoodCheck) _buildMoodCheckIn(theme),
 
                     const SizedBox(height: 16),
 
@@ -183,15 +236,15 @@ class HomeScreen extends ConsumerWidget {
                 children: [
                   IconButton(
                     icon: const Text("😄", style: TextStyle(fontSize: 28)),
-                    onPressed: () {},
+                    onPressed: _saveMoodCheck,
                   ),
                   IconButton(
                     icon: const Text("😐", style: TextStyle(fontSize: 28)),
-                    onPressed: () {},
+                    onPressed: _saveMoodCheck,
                   ),
                   IconButton(
                     icon: const Text("☹️", style: TextStyle(fontSize: 28)),
-                    onPressed: () {},
+                    onPressed: _saveMoodCheck,
                   ),
                 ],
               ),

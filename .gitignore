@@ -46,3 +46,6 @@ app.*.map.json
 
 # Firebase Details
 lib/firebase_options.dart
+
+# Notes File
+remember.txt

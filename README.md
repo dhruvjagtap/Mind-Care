@@ -44,8 +44,8 @@ Students can chat with an AI companion, access self-help resources, join peer fo
 - [x] Firebase Setup  
 - [x] Authentication (Anonymous Login)  
 - [x] Home Screen UI (Feature Grid + Tips + Sessions)  
-- [ ] AI Chatbot (basic version)  
-- [ ] Resource Hub  
+- [x] AI Chatbot (basic version)  
+- [x] Resource Hub  
 - [ ] Forum & Booking System  
 
 ---

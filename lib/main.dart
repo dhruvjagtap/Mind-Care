@@ -1,3 +1,4 @@
+import 'package:digital_mental_health_app/feature/resources/presenetation/resources_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -5,6 +6,7 @@ import 'firebase_options.dart'; // this file is auto-generated when you run flut
 import 'feature/auth/presentation/auth_checker.dart';
 import 'feature/theme/presentation/theme_provider.dart';
 import 'feature/profile/profile_screen.dart';
+import 'feature/chatbot/chat_bot_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -54,7 +56,11 @@ class MyApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       home: const AuthChecker(),
 
-      routes: {ProfileScreen.routeName: (context) => const ProfileScreen()},
+      routes: {
+        ProfileScreen.routeName: (context) => const ProfileScreen(),
+        ChatbotScreen.routeName: (context) => const ChatbotScreen(),
+        ResourcesScreen.routeName: (context) => const ResourcesScreen(),
+      },
     );
   }
 }
