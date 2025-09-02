@@ -46,7 +46,9 @@ Students can chat with an AI companion, access self-help resources, join peer fo
 - [x] Home Screen UI (Feature Grid + Tips + Sessions)  
 - [x] AI Chatbot (basic version)  
 - [x] Resource Hub  
-- [ ] Forum & Booking System  
+- [ ] Screening
+- [ ] Forum
+- [ ] Booking System  
 
 ---
 
@@ -55,7 +57,7 @@ Students can chat with an AI companion, access self-help resources, join peer fo
 ### 1. Clone the Repo
 
 ```sh
-git clone https://github.com/<your-username>/mind-care.git mind-care
+git clone https://github.com/dhruvjagtap/Mind-Care.git
 cd mind-care
 ```
 
