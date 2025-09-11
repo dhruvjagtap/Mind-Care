@@ -1,7 +1,9 @@
+// lib/feature/resources/presenetation/resources_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 // import '../data/resource_model.dart';
 import './resource_provider.dart';
+import '../../analytics/analytics_service.dart';
 
 class ResourcesScreen extends ConsumerStatefulWidget {
   static const routeName = '/resources';
@@ -24,6 +26,25 @@ class _ResourcesScreenState extends ConsumerState<ResourcesScreen> {
   ];
 
   String _selectedCategory = 'All';
+
+  late DateTime _startTime;
+
+  @override
+  void initState() {
+    super.initState();
+    _startTime = DateTime.now();
+    analyticsService.logScreenView("ResourcesScreen");
+  }
+
+  @override
+  void dispose() {
+    final duration = DateTime.now().difference(_startTime);
+    analyticsService.logEvent(
+      "resources_screen_time",
+      params: {"seconds": duration.inSeconds},
+    );
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -93,6 +114,16 @@ class _ResourcesScreenState extends ConsumerState<ResourcesScreen> {
                           ),
                           onTap: () {
                             // TODO: open resource (video/audio/pdf)
+
+                            // log resource open
+                            analyticsService.logEvent(
+                              "resource_opened",
+                              params: {
+                                "title": res.title,
+                                "category": res.category,
+                                "type": res.type,
+                              },
+                            );
                           },
                         ),
                       );
@@ -117,6 +148,11 @@ class _ResourcesScreenState extends ConsumerState<ResourcesScreen> {
       selected: isSelected,
       onSelected: (_) {
         setState(() => _selectedCategory = category);
+
+        analyticsService.logEvent(
+          "category_selected",
+          params: {"category": category},
+        );
       },
       selectedColor: theme.colorScheme.primary.withOpacity(0.2),
       labelStyle: TextStyle(

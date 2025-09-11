@@ -1,0 +1,15 @@
+chatbot screen
+Later you can replace _detectMood with a real sentiment analysis API.
+
+Forum screen
+📌 What to do later (after you build the features)
+
+Once you implement:
+
+Opening a post → add forum_post_opened
+
+Creating a post → add forum_post_created
+
+Replies → add forum_reply_added
+
+Likes → add forum_post_liked

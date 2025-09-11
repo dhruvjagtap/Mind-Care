@@ -46,9 +46,10 @@ Students can chat with an AI companion, access self-help resources, join peer fo
 - [x] Home Screen UI (Feature Grid + Tips + Sessions)  
 - [x] AI Chatbot (basic version)  
 - [x] Resource Hub  
-- [ ] Screening
-- [ ] Forum
-- [ ] Booking System  
+- [x] Forum
+- [x] Booking System  
+- [x] Screening
+- [ ] Profile
 
 ---
 

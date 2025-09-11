@@ -1,11 +1,14 @@
-import 'package:digital_mental_health_app/feature/profile/profile_screen.dart';
+import 'package:digital_mental_health_app/feature/profile/presentation/profile_screen.dart';
 import 'package:digital_mental_health_app/feature/resources/presenetation/resources_screen.dart';
+import 'package:digital_mental_health_app/feature/screeening/presentation/screening_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-// import 'package:firebase_auth/firebase_auth.dart';
 import '../auth/presentation/auth_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../chatbot/chat_bot_screen.dart';
+import '../booking/presentation/booking_screen.dart';
+import '../forum/presentation/forum_screen.dart';
+import '../analytics/analytics_service.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -20,13 +23,26 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   void initState() {
     super.initState();
     _checkMoodVisibility();
+
+    // Log screen view for analytics
+    analyticsService.logScreenView("home_screen");
   }
 
-  Future<void> _saveMoodCheck() async {
+  Future<void> _saveMoodCheck(BuildContext context, String mood) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(
       "last_mood_check",
       DateTime.now().millisecondsSinceEpoch,
+    );
+
+    await analyticsService.logEvent(
+      "mood_selected",
+      params: {"mood": mood, "timestamp": DateTime.now().toIso8601String()},
+    );
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => ChatbotScreen(initialMood: mood)),
     );
 
     setState(() {
@@ -91,7 +107,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const ChatbotScreen(),
+                        builder: (context) =>
+                            const ChatbotScreen(initialMood: "none"),
                       ),
                     );
                   }),
@@ -106,6 +123,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   }),
                   _buildFeatureCard(context, Icons.forum, "Peer Forum", () {
                     // Navigate to Forum screen
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ForumScreen(),
+                      ),
+                    );
                   }),
                   _buildFeatureCard(
                     context,
@@ -113,10 +136,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     "Counsellor",
                     () {
                       // Navigate to Booking screen
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const BookingScreen(),
+                        ),
+                      );
                     },
                   ),
                   _buildFeatureCard(context, Icons.assignment, "Screening", () {
                     // Navigate to Screening screen
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ScreeningScreen(),
+                      ),
+                    );
                   }),
                   _buildFeatureCard(context, Icons.person, "Profile", () {
                     // Navigate to Profile screen
@@ -236,15 +271,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 children: [
                   IconButton(
                     icon: const Text("😄", style: TextStyle(fontSize: 28)),
-                    onPressed: _saveMoodCheck,
+                    onPressed: () => _saveMoodCheck(context, "happy"),
                   ),
                   IconButton(
                     icon: const Text("😐", style: TextStyle(fontSize: 28)),
-                    onPressed: _saveMoodCheck,
+                    onPressed: () => _saveMoodCheck(context, "neutral"),
                   ),
                   IconButton(
                     icon: const Text("☹️", style: TextStyle(fontSize: 28)),
-                    onPressed: _saveMoodCheck,
+                    onPressed: () => _saveMoodCheck(context, "sad"),
                   ),
                 ],
               ),
