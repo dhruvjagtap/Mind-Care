@@ -3,12 +3,13 @@ import 'package:digital_mental_health_app/feature/resources/presenetation/resour
 import 'package:digital_mental_health_app/feature/screeening/presentation/screening_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../auth/presentation/auth_provider.dart';
+// import '../auth/presentation/auth_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../chatbot/chat_bot_screen.dart';
 import '../booking/presentation/booking_screen.dart';
 import '../forum/presentation/forum_screen.dart';
 import '../analytics/analytics_service.dart';
+import '../profile/presentation/onboarding_modal1.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -74,8 +75,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
-            onPressed: () {
-              ref.read(authServiceProvider).signOut();
+            onPressed: () async {
+              final prefs = await SharedPreferences.getInstance();
+
+              // 1. Clear only sensitive session data, not PRN/college
+              await prefs.remove("pin"); // if stored
+              // await prefs.remove("sessionToken"); // optional if you have one
+
+              // 2. Reset provider state (optional)
+              ref.read(onboardingProvider.notifier).reset();
+
+              // 3. Navigate to login/PIN screen
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const OnboardingModal(),
+                ), // start from PIN step
+                (route) => false,
+              );
             },
           ),
         ],

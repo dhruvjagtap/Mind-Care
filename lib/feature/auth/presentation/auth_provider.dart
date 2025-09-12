@@ -1,13 +1,12 @@
+// lib/feature/auth/presentation/auth_provider.dart
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import '../data/auth_service.dart';
 
-// Provide AuthService
-final authServiceProvider = Provider<AuthService>((ref) {
-  return AuthService();
-});
+/// Student auth model
+class StudentAuth {
+  final String college;
+  final String prn;
+  StudentAuth({required this.college, required this.prn});
+}
 
-// Provide auth state stream (listens to Firebase user changes)
-final authStateProvider = StreamProvider<User?>((ref) {
-  return ref.watch(authServiceProvider).authStateChanges;
-});
+/// Holds current logged in student (null if not logged in)
+final authStateProvider = StateProvider<StudentAuth?>((ref) => null);

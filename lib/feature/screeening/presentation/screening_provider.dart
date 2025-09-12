@@ -26,7 +26,8 @@ final saveResultProvider = FutureProvider.family<void, String>((
   testType,
 ) async {
   final repo = ref.read(screeningRepositoryProvider);
-  final userId = ref.read(authServiceProvider).currentUser!.uid; // from auth
+  final student = ref.read(authStateProvider);
+  final userId = "${student!.college}-${student.prn}";
   final answers = ref.read(answersProvider);
   final score = ref.read(scoreProvider);
 

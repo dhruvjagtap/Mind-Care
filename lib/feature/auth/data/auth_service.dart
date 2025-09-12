@@ -1,19 +1,39 @@
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AuthService {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  User? get currentUser => _auth.currentUser;
-  // Stream of auth state (logged in/out)
-  Stream<User?> get authStateChanges => _auth.authStateChanges();
-  // Sign in anonymously
-  Future<User?> signInAnonymously() async {
-    final userCredential = await _auth.signInAnonymously();
-    return userCredential.user;
+  Future<Map<String, dynamic>?> loginWithPRN(
+    String college,
+    String prn,
+    String pin,
+  ) async {
+    final doc = await _firestore
+        .collection("colleges")
+        .doc(college)
+        .collection("students")
+        .doc(prn)
+        .get();
+
+    if (!doc.exists) return null;
+
+    final data = doc.data()!;
+    if (data["pinHash"] == pin) {
+      return data; // success
+    }
+    return null; // wrong pin
   }
-  // Sign out
 
-  Future<void> signOut() async {
-    await _auth.signOut();
+  Future<void> registerPRN(String college, String prn, String pin) async {
+    await _firestore
+        .collection("colleges")
+        .doc(college)
+        .collection("students")
+        .doc(prn)
+        .set({
+          "pinHash": pin,
+          "isOnboarded": false,
+          "createdAt": FieldValue.serverTimestamp(),
+        });
   }
 }

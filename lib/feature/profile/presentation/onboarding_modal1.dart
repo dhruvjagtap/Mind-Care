@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/profile_service.dart';
 import '../../home/home_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 final onboardingProvider =
@@ -17,10 +18,34 @@ class OnboardingNotifier extends StateNotifier<Map<String, dynamic>> {
     state = {...state, key: value};
   }
 
+  // Future<void> saveProfile() async {
+  //   final updatedState = {...state, "isOnboarded": true};
+  //   state = updatedState;
+  //   await _service.updateProfile(updatedState);
+  // }
+
   Future<void> saveProfile() async {
+    if (state["college"] == null || state["prn"] == null) return;
+
     final updatedState = {...state, "isOnboarded": true};
     state = updatedState;
-    await _service.updateProfile(updatedState);
+
+    // Save to Firestore
+    await FirebaseFirestore.instance
+        .collection("colleges")
+        .doc(state["college"])
+        .collection("students")
+        .doc(state["prn"])
+        .set({...updatedState, "createdAt": FieldValue.serverTimestamp()});
+
+    // Save locally
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString("college", state["college"]);
+    await prefs.setString("prn", state["prn"]);
+  }
+
+  void reset() {
+    state = {};
   }
 }
 
@@ -85,13 +110,22 @@ class _OnboardingModalState extends ConsumerState<OnboardingModal> {
                 const SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: () async {
+                    final notifier = ref.read(onboardingProvider.notifier);
+
                     if (_step < steps.length - 1) {
-                      if (_step == 2) {
-                        // PRN step (since Welcome is added before College)
-                        // check PRN existence
+                      // Step-specific logic
+                      if (_step == 1) {
+                        notifier.updateData("college", _collegeId);
+                      } else if (_step == 2) {
+                        notifier.updateData("prn", prnController.text);
                         final exists = await _checkStudentExists();
                         setState(() => _isNewStudent = !exists);
+                      } else if (_step == 3 && _isNewStudent) {
+                        notifier.updateData("name", nameController.text);
+                      } else if (_step == (_isNewStudent ? 4 : 3)) {
+                        notifier.updateData("pinHash", pinController.text);
                       }
+
                       setState(() => _step++);
                     } else {
                       await notifier.saveProfile();
@@ -162,7 +196,6 @@ class _OnboardingModalState extends ConsumerState<OnboardingModal> {
         const Text("Enter your PRN/Enrollment Number"),
         TextField(
           controller: prnController,
-          keyboardType: TextInputType.number,
           decoration: const InputDecoration(
             border: OutlineInputBorder(),
             hintText: "PRN Number",
