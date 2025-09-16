@@ -13,3 +13,71 @@ Creating a post → add forum_post_created
 Replies → add forum_reply_added
 
 Likes → add forum_post_liked
+
+
+------------------------------------
+1️⃣ Core Features (Essential for any chat/forum screen)
+Feature	Description
+Display Post Content	Show the post’s title and main message at the top.
+List Replies	Stream all replies from Firestore and show them in chronological order.
+Send Reply	Text input + send button to add a reply to the current post.
+Reactions	Tap/long press a message to react (like, emoji, etc.) similar to WhatsApp.
+Delete for Me	Hide a message only for the current user without deleting it for others.
+Swipe to Reply	Swipe a message in the opposite direction of alignment to reply (like quoting).
+Swipe to Delete	Swipe a message to trigger “Delete for Me” action.
+Show Reaction Counts	Display how many users reacted to a message and which emoji they used.
+Timestamp	Show time when post/reply was sent.
+2️⃣ Advanced Features (Nice-to-have, WhatsApp-like)
+Feature	Description
+Edit Reply	Allow users to edit their own replies.
+Reply Preview	When replying to a message, show the original message snippet above input field.
+Multiple Reactions	Allow multiple users to react with different emojis.
+Profile Display	Show sender’s name or avatar next to their message.
+Real-Time Updates	Stream changes in Firestore so messages, replies, and reactions update live.
+Scroll to New Messages	Automatically scroll to the bottom when a new reply arrives.
+Quote Reply	Highlight original message when replying to it (like WhatsApp reply style).
+Pinned Posts / Important Messages	Optional: ability to pin posts at the top.
+3️⃣ UI/UX Enhancements
+Feature	Description
+Bubble Style Messages	Different alignment and color for self vs others’ messages.
+Reaction Bar on Long Press	Show emoji reactions when long-pressing a message.
+Swipe Feedback	Show animation when swiping for reply or delete.
+Confirmation Dialogs	Ask user before deleting a message.
+Emoji Picker	For sending reactions or adding emojis to replies.
+Unread / New Message Indicators	Highlight new replies since last visit.
+4️⃣ Optional / Future Enhancements
+
+Mentions / Tag Users (@username) in replies.
+
+Search within Post Replies.
+
+Attachments (images, files, links).
+
+Notifications for Reactions or Replies.
+
+Moderation Features (report messages, block users).
+
+💡 Summary
+
+For your first version, focus on core + some advanced features:
+
+Core: Display post, stream replies, send reply, reactions, swipe-to-reply/delete, timestamps.
+
+Advanced: Reply preview, multiple reactions, bubble styling, real-time updates.
+
+
+----------------------------------------------------------------------------------------------------
+Notifications
+
+Analytics
+
+User Recommendation
+
+Daily Diary writing
+----------------------------------------------------------------------------------------------------
+
+Adding PRN no. to the fields.
+
+Admin can propose a happing to user to talk with a sad person 
+Example: 
+"Your friend is feeling stressed are you able to talk with and a chat or rejection option".

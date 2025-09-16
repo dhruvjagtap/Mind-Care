@@ -1,0 +1,29 @@
+1. auth login & register
+   1. using prn no., pin, college name, and hobbies
+
+2. home screen
+   with features like Chat bot, resources, screening, forum, counsellor, and profile
+   how are you feeling today
+   ananlytics done
+
+   pending diary thoughts
+
+3. Chat bot
+   not interactive
+   ananlytics done 
+
+4. forum
+   delete messages, write messages, react, reply 
+
+   pending 
+   ananlytics
+
+5. counsellor
+   parital implementation pending ananlytics
+
+6. profile
+   cleaner look
+
+7. screening 
+   requires refinement 
+

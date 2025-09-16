@@ -3,13 +3,14 @@ import 'package:digital_mental_health_app/feature/resources/presenetation/resour
 import 'package:digital_mental_health_app/feature/screeening/presentation/screening_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-// import '../auth/presentation/auth_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../chatbot/chat_bot_screen.dart';
 import '../booking/presentation/booking_screen.dart';
 import '../forum/presentation/forum_screen.dart';
 import '../analytics/analytics_service.dart';
-import '../profile/presentation/onboarding_modal1.dart';
+import '../auth/data/auth_service.dart';
+import '../auth/presentation/auth_provider.dart';
+import '../auth/presentation/welcome_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -76,21 +77,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {
-              final prefs = await SharedPreferences.getInstance();
+              final authService = AuthService();
 
-              // 1. Clear only sensitive session data, not PRN/college
-              await prefs.remove("pin"); // if stored
-              // await prefs.remove("sessionToken"); // optional if you have one
+              // 1. Clear prefs
+              await authService.logout();
 
-              // 2. Reset provider state (optional)
-              ref.read(onboardingProvider.notifier).reset();
+              // 2. Clear provider state
+              ref.read(authStateProvider.notifier).state = null;
 
-              // 3. Navigate to login/PIN screen
+              // 3. Navigate back to WelcomeScreen
               Navigator.pushAndRemoveUntil(
                 context,
-                MaterialPageRoute(
-                  builder: (_) => const OnboardingModal(),
-                ), // start from PIN step
+                MaterialPageRoute(builder: (_) => const WelcomeScreen()),
                 (route) => false,
               );
             },

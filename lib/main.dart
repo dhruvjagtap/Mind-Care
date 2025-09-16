@@ -1,3 +1,5 @@
+import 'package:digital_mental_health_app/feature/auth/presentation/login_screen.dart';
+import 'package:digital_mental_health_app/feature/auth/presentation/register_screen.dart';
 import 'package:digital_mental_health_app/feature/booking/presentation/booking_screen.dart';
 import 'package:digital_mental_health_app/feature/resources/presenetation/resources_screen.dart';
 import 'package:digital_mental_health_app/feature/screeening/presentation/screening_screen.dart';
@@ -71,6 +73,8 @@ class MyApp extends ConsumerWidget {
         ForumScreen.routeName: (context) => const ForumScreen(),
         BookingScreen.routeName: (context) => const BookingScreen(),
         ScreeningScreen.routeName: (context) => const ScreeningScreen(),
+        RegisterScreen.routeName: (context) => const RegisterScreen(),
+        LoginScreen.routeName: (context) => const LoginScreen(),
       },
     );
   }

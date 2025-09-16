@@ -1,307 +1,376 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../data/profile_service.dart';
-import '../../home/home_screen.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+// import 'dart:convert';
+// import 'package:crypto/crypto.dart';
+// import 'package:flutter/material.dart';
+// import 'package:flutter_riverpod/flutter_riverpod.dart';
+// import 'package:cloud_firestore/cloud_firestore.dart';
+// import 'package:shared_preferences/shared_preferences.dart';
+// import '../../home/home_screen.dart';
+// import '../../auth/data/auth_service.dart';
+// import '../data/profile_service.dart';
 
-final onboardingProvider =
-    StateNotifierProvider<OnboardingNotifier, Map<String, dynamic>>((ref) {
-      return OnboardingNotifier(ProfileService());
-    });
+// final onboardingProvider =
+//     StateNotifierProvider<OnboardingNotifier, Map<String, dynamic>>((ref) {
+//       return OnboardingNotifier(ProfileService());
+//     });
 
-class OnboardingNotifier extends StateNotifier<Map<String, dynamic>> {
-  final ProfileService _service;
-  OnboardingNotifier(this._service) : super({});
+// class OnboardingNotifier extends StateNotifier<Map<String, dynamic>> {
+//   final ProfileService _service;
+//   OnboardingNotifier(this._service) : super({});
 
-  void updateData(String key, dynamic value) {
-    state = {...state, key: value};
-  }
+//   void updateData(String key, dynamic value) {
+//     state = {...state, key: value};
+//   }
 
-  // Future<void> saveProfile() async {
-  //   final updatedState = {...state, "isOnboarded": true};
-  //   state = updatedState;
-  //   await _service.updateProfile(updatedState);
-  // }
+//   void reset() {
+//     state = {};
+//   }
+// }
 
-  Future<void> saveProfile() async {
-    if (state["college"] == null || state["prn"] == null) return;
+// /// Helper to hash PIN
+// String hashPin(String pin) {
+//   final bytes = utf8.encode(pin);
+//   final digest = sha256.convert(bytes);
+//   return digest.toString();
+// }
 
-    final updatedState = {...state, "isOnboarded": true};
-    state = updatedState;
+// class OnboardingModal extends ConsumerStatefulWidget {
+//   const OnboardingModal({super.key});
 
-    // Save to Firestore
-    await FirebaseFirestore.instance
-        .collection("colleges")
-        .doc(state["college"])
-        .collection("students")
-        .doc(state["prn"])
-        .set({...updatedState, "createdAt": FieldValue.serverTimestamp()});
+//   @override
+//   ConsumerState<OnboardingModal> createState() => _OnboardingModalState();
+// }
 
-    // Save locally
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString("college", state["college"]);
-    await prefs.setString("prn", state["prn"]);
-  }
+// class _OnboardingModalState extends ConsumerState<OnboardingModal> {
+//   int _step = 0;
+//   String? _collegeId;
+//   late TextEditingController prnController;
+//   late TextEditingController nameController;
+//   late TextEditingController pinController;
+//   bool _isNewStudent = false;
+//   bool _isPinVisible = false;
 
-  void reset() {
-    state = {};
-  }
-}
+//   final List<String> colleges = ["I²IT", "College B", "College C"];
 
-class OnboardingModal extends ConsumerStatefulWidget {
-  const OnboardingModal({super.key});
+//   @override
+//   void initState() {
+//     super.initState();
+//     prnController = TextEditingController();
+//     nameController = TextEditingController();
+//     pinController = TextEditingController();
+//   }
 
-  @override
-  ConsumerState<OnboardingModal> createState() => _OnboardingModalState();
-}
+//   @override
+//   void dispose() {
+//     prnController.dispose();
+//     nameController.dispose();
+//     pinController.dispose();
+//     super.dispose();
+//   }
 
-class _OnboardingModalState extends ConsumerState<OnboardingModal> {
-  int _step = 0;
-  String? _collegeId;
-  late TextEditingController prnController;
-  late TextEditingController nameController;
-  late TextEditingController pinController;
+//   @override
+//   Widget build(BuildContext context) {
+//     final notifier = ref.read(onboardingProvider.notifier);
+//     final authService = AuthService();
 
-  bool _isNewStudent = false;
+//     // Registration steps
+//     final registrationSteps = [
+//       _collegeStep(),
+//       _prnStep(),
+//       _nameStep(),
+//       _pinStep(),
+//       _hobbiesStep(),
+//     ];
 
-  @override
-  void initState() {
-    super.initState();
-    prnController = TextEditingController();
-    nameController = TextEditingController();
-    pinController = TextEditingController();
-  }
+//     // Login steps
+//     final loginSteps = [_collegeStep(), _prnStep(), _pinStep()];
 
-  @override
-  void dispose() {
-    prnController.dispose();
-    nameController.dispose();
-    pinController.dispose();
-    super.dispose();
-  }
+//     final steps = _isNewStudent ? registrationSteps : loginSteps;
 
-  @override
-  Widget build(BuildContext context) {
-    final notifier = ref.read(onboardingProvider.notifier);
+//     return Scaffold(
+//       body: Center(
+//         child: Card(
+//           elevation: 4,
+//           shape: RoundedRectangleBorder(
+//             borderRadius: BorderRadius.circular(20),
+//           ),
+//           child: SizedBox(
+//             width: 350,
+//             height: 450,
+//             child: Padding(
+//               padding: const EdgeInsets.all(20),
+//               child: Column(
+//                 children: [
+//                   Expanded(
+//                     child: (_step == 0)
+//                         ? _welcomeStep()
+//                         : steps[_step - 1], // step 0 = welcome
+//                   ),
+//                   const SizedBox(height: 20),
+//                   _buildButtons(steps, notifier, authService),
+//                 ],
+//               ),
+//             ),
+//           ),
+//         ),
+//       ),
+//     );
+//   }
 
-    final steps = [
-      _welcomeStep(notifier), // NEW FIRST STEP
-      _collegeStep(),
-      _prnStep(notifier),
-      if (_isNewStudent) _nameStep(notifier),
-      _pinStep(notifier),
-      _hobbiesStep(notifier),
-    ];
+//   /// Buttons
+//   Widget _buildButtons(
+//     List<Widget> steps,
+//     OnboardingNotifier notifier,
+//     AuthService authService,
+//   ) {
+//     if (_step == 0) {
+//       return Row(
+//         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+//         children: [
+//           ElevatedButton(
+//             onPressed: () {
+//               setState(() {
+//                 _isNewStudent = false;
+//                 _step = 1;
+//               });
+//             },
+//             child: const Text("Login"),
+//           ),
+//           ElevatedButton(
+//             onPressed: () {
+//               setState(() {
+//                 _isNewStudent = true;
+//                 _step = 1;
+//               });
+//             },
+//             child: const Text("Register"),
+//           ),
+//         ],
+//       );
+//     }
 
-    return Scaffold(
-      body: Center(
-        child: Card(
-          elevation: 4,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                steps[_step],
-                const SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: () async {
-                    final notifier = ref.read(onboardingProvider.notifier);
+//     return Row(
+//       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//       children: [
+//         ElevatedButton(
+//           onPressed: () {
+//             if (_step > 0) setState(() => _step--);
+//           },
+//           child: const Text("Previous"),
+//         ),
+//         ElevatedButton(
+//           onPressed: () async {
+//             final isLast = _step == steps.length;
 
-                    if (_step < steps.length - 1) {
-                      // Step-specific logic
-                      if (_step == 1) {
-                        notifier.updateData("college", _collegeId);
-                      } else if (_step == 2) {
-                        notifier.updateData("prn", prnController.text);
-                        final exists = await _checkStudentExists();
-                        setState(() => _isNewStudent = !exists);
-                      } else if (_step == 3 && _isNewStudent) {
-                        notifier.updateData("name", nameController.text);
-                      } else if (_step == (_isNewStudent ? 4 : 3)) {
-                        notifier.updateData("pinHash", pinController.text);
-                      }
+//             if (isLast) {
+//               if (_isNewStudent) {
+//                 // Register
+//                 final exists = await authService.checkStudentExists(
+//                   _collegeId!,
+//                   prnController.text,
+//                 );
+//                 if (exists) {
+//                   ScaffoldMessenger.of(context).showSnackBar(
+//                     const SnackBar(
+//                       content: Text("PRN already registered. Please login."),
+//                     ),
+//                   );
+//                   return;
+//                 }
 
-                      setState(() => _step++);
-                    } else {
-                      await notifier.saveProfile();
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(builder: (_) => const HomeScreen()),
-                      );
-                    }
-                  },
-                  child: Text(
-                    _step == 0
-                        ? "Let's Start"
-                        : (_step < steps.length - 1 ? "Next" : "Finish"),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+//                 await authService.registerPRN(
+//                   college: _collegeId!,
+//                   prn: prnController.text,
+//                   pin: hashPin(pinController.text),
+//                   name: nameController.text,
+//                   hobbies: List<String>.from(
+//                     ref.read(onboardingProvider)["hobbies"] ?? [],
+//                   ),
+//                 );
+//               } else {
+//                 // Login
+//                 final data = await authService.loginWithPRN(
+//                   _collegeId!,
+//                   prnController.text,
+//                   hashPin(pinController.text),
+//                 );
+//                 if (data == null) {
+//                   ScaffoldMessenger.of(context).showSnackBar(
+//                     const SnackBar(
+//                       content: Text("Invalid PRN or PIN. Try again."),
+//                     ),
+//                   );
+//                   return;
+//                 }
+//               }
 
-  /// Welcome Step
-  Widget _welcomeStep(OnboardingNotifier notifier) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: const [
-        Text(
-          "Welcome to Mind Care",
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          textAlign: TextAlign.center,
-        ),
-        SizedBox(height: 10),
-        Text("Let's get you set up quickly!", textAlign: TextAlign.center),
-      ],
-    );
-  }
+//               // Update provider & save session
+//               notifier.updateData("college", _collegeId);
+//               notifier.updateData("prn", prnController.text);
+//               notifier.updateData("isOnboarded", true);
 
-  /// Step 1: Select College
-  Widget _collegeStep() {
-    final colleges = ["I²IT", "College B", "College C"];
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const Text(
-          "Select your College",
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
-        DropdownButton<String>(
-          value: _collegeId,
-          hint: const Text("Choose College"),
-          items: colleges.map((c) {
-            return DropdownMenuItem(value: c, child: Text(c));
-          }).toList(),
-          onChanged: (val) {
-            setState(() => _collegeId = val);
-          },
-        ),
-      ],
-    );
-  }
+//               final prefs = await SharedPreferences.getInstance();
+//               await prefs.setString("college", _collegeId!);
+//               await prefs.setString("prn", prnController.text);
+//               await prefs.setBool("isOnboarded", true);
 
-  /// Step 2: Enter PRN
-  Widget _prnStep(OnboardingNotifier notifier) {
-    return Column(
-      children: [
-        const Text("Enter your PRN/Enrollment Number"),
-        TextField(
-          controller: prnController,
-          decoration: const InputDecoration(
-            border: OutlineInputBorder(),
-            hintText: "PRN Number",
-          ),
-          onChanged: (val) {
-            notifier.updateData("prn", val);
-          },
-        ),
-      ],
-    );
-  }
+//               Navigator.pushReplacement(
+//                 context,
+//                 MaterialPageRoute(builder: (_) => const HomeScreen()),
+//               );
+//               return;
+//             }
 
-  /// Step 3 (if new student): Enter Name
-  Widget _nameStep(OnboardingNotifier notifier) {
-    return Column(
-      children: [
-        const Text("What should I call you?"),
-        TextField(
-          controller: nameController,
-          decoration: const InputDecoration(
-            border: OutlineInputBorder(),
-            hintText: "Your name",
-          ),
-          onChanged: (val) {
-            notifier.updateData("name", val);
-          },
-        ),
-      ],
-    );
-  }
+//             setState(() => _step++);
+//           },
+//           child: Text(_step == steps.length ? "Finish" : "Next"),
+//         ),
+//       ],
+//     );
+//   }
 
-  /// Step 4: PIN setup / validation
-  Widget _pinStep(OnboardingNotifier notifier) {
-    return Column(
-      children: [
-        Text(
-          _isNewStudent
-              ? "Set a 4-digit PIN for login"
-              : "Enter your PIN to continue",
-        ),
-        TextField(
-          controller: pinController,
-          obscureText: true,
-          keyboardType: TextInputType.number,
-          maxLength: 4,
-          decoration: const InputDecoration(
-            border: OutlineInputBorder(),
-            hintText: "PIN",
-          ),
-          onChanged: (val) {
-            // hash before saving ideally
-            notifier.updateData("pinHash", val);
-          },
-        ),
-      ],
-    );
-  }
+//   /// Welcome Step
+//   Widget _welcomeStep() {
+//     return Column(
+//       mainAxisAlignment: MainAxisAlignment.center,
+//       children: const [
+//         Text(
+//           "Welcome to Mind Care",
+//           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+//           textAlign: TextAlign.center,
+//         ),
+//         SizedBox(height: 10),
+//         Text("Login or Register to continue", textAlign: TextAlign.center),
+//       ],
+//     );
+//   }
 
-  /// Step 5: Hobbies
-  Widget _hobbiesStep(OnboardingNotifier notifier) {
-    final profileState = ref.watch(onboardingProvider);
-    final selectedHobbies = List<String>.from(profileState["hobbies"] ?? []);
-    final hobbies = [
-      "Music",
-      "Gaming",
-      "Reading",
-      "Sports",
-      "Traveling",
-      "Others",
-    ];
+//   /// College Step
+//   Widget _collegeStep() {
+//     return Column(
+//       mainAxisAlignment: MainAxisAlignment.center,
+//       children: [
+//         const Text(
+//           "Select your College",
+//           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+//         ),
+//         DropdownButton<String>(
+//           value: _collegeId,
+//           hint: const Text("Choose College"),
+//           items: colleges
+//               .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+//               .toList(),
+//           onChanged: (val) {
+//             setState(() => _collegeId = val);
+//           },
+//         ),
+//       ],
+//     );
+//   }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text("What do you enjoy doing in your free time?"),
-        Wrap(
-          spacing: 8,
-          children: hobbies.map((hobby) {
-            final isSelected = selectedHobbies.contains(hobby);
-            return FilterChip(
-              label: Text(hobby),
-              selected: isSelected,
-              onSelected: (selected) {
-                if (selected) {
-                  selectedHobbies.add(hobby);
-                } else {
-                  selectedHobbies.remove(hobby);
-                }
-                notifier.updateData("hobbies", selectedHobbies);
-              },
-            );
-          }).toList(),
-        ),
-      ],
-    );
-  }
+//   /// PRN Step
+//   Widget _prnStep() {
+//     return Column(
+//       mainAxisAlignment: MainAxisAlignment.center,
+//       children: [
+//         const Text("Enter your PRN/Enrollment Number"),
+//         TextField(
+//           controller: prnController,
+//           decoration: const InputDecoration(
+//             border: OutlineInputBorder(),
+//             hintText: "PRN Number",
+//           ),
+//         ),
+//       ],
+//     );
+//   }
 
-  /// Firestore check for student
-  Future<bool> _checkStudentExists() async {
-    if (_collegeId == null || prnController.text.isEmpty) return false;
-    final doc = await FirebaseFirestore.instance
-        .collection("colleges")
-        .doc(_collegeId)
-        .collection("students")
-        .doc(prnController.text)
-        .get();
-    return doc.exists;
-  }
-}
+//   /// Name Step (registration only)
+//   Widget _nameStep() {
+//     return Column(
+//       mainAxisAlignment: MainAxisAlignment.center,
+//       children: [
+//         const Text("What should I call you?"),
+//         TextField(
+//           controller: nameController,
+//           decoration: const InputDecoration(
+//             border: OutlineInputBorder(),
+//             hintText: "Your name",
+//           ),
+//         ),
+//       ],
+//     );
+//   }
+
+//   /// PIN Step
+//   Widget _pinStep() {
+//     return Column(
+//       mainAxisAlignment: MainAxisAlignment.center,
+//       children: [
+//         Text(
+//           _isNewStudent
+//               ? "Set a 4-digit PIN for login"
+//               : "Enter your PIN to continue",
+//         ),
+//         TextField(
+//           controller: pinController,
+//           obscureText: !_isPinVisible,
+//           keyboardType: TextInputType.number,
+//           maxLength: 4,
+//           decoration: InputDecoration(
+//             border: const OutlineInputBorder(),
+//             hintText: "PIN",
+//             suffixIcon: IconButton(
+//               icon: Icon(
+//                 _isPinVisible ? Icons.visibility : Icons.visibility_off,
+//               ),
+//               onPressed: () {
+//                 setState(() => _isPinVisible = !_isPinVisible);
+//               },
+//             ),
+//           ),
+//         ),
+//       ],
+//     );
+//   }
+
+//   /// Hobbies Step (registration only)
+//   Widget _hobbiesStep() {
+//     final notifier = ref.read(onboardingProvider.notifier);
+//     final profileState = ref.watch(onboardingProvider);
+//     final selectedHobbies = List<String>.from(profileState["hobbies"] ?? []);
+//     final hobbies = [
+//       "Music",
+//       "Gaming",
+//       "Reading",
+//       "Sports",
+//       "Traveling",
+//       "Others",
+//     ];
+
+//     return Column(
+//       crossAxisAlignment: CrossAxisAlignment.start,
+//       children: [
+//         const Text("What do you enjoy doing in your free time?"),
+//         Wrap(
+//           spacing: 8,
+//           children: hobbies.map((hobby) {
+//             final isSelected = selectedHobbies.contains(hobby);
+//             return FilterChip(
+//               label: Text(hobby),
+//               selected: isSelected,
+//               onSelected: (selected) {
+//                 final newList = [...selectedHobbies];
+//                 if (selected) {
+//                   newList.add(hobby);
+//                 } else {
+//                   newList.remove(hobby);
+//                 }
+//                 notifier.updateData("hobbies", newList);
+//               },
+//             );
+//           }).toList(),
+//         ),
+//       ],
+//     );
+//   }
+// }

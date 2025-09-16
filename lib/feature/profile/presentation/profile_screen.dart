@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../theme/presentation/theme_provider.dart'; // where themeModeProvider lives
-import 'profile_provider.dart'; // adjust the path to where your profile provider lives
+import '../../theme/presentation/theme_provider.dart';
+import 'profile_provider.dart';
 
 class ProfileScreen extends ConsumerWidget {
   static const routeName = '/profile';
@@ -24,9 +24,12 @@ class ProfileScreen extends ConsumerWidget {
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
+
+          Text("College: ${profile["college"] ?? "Not set"}"),
           Text("Name: ${profile["name"] ?? "Not set"}"),
           Text("PRN: ${profile["prn"] ?? "Not set"}"),
           Text("Hobbies: ${(profile["hobbies"] ?? []).join(", ")}"),
+
           if (profile["otherHobby"] != null &&
               profile["otherHobby"].toString().isNotEmpty)
             Text("Other Hobby: ${profile["otherHobby"]}"),
@@ -34,6 +37,7 @@ class ProfileScreen extends ConsumerWidget {
           const SizedBox(height: 20),
           ElevatedButton(
             onPressed: () async {
+              // Example update: change name
               ref
                   .read(profileNotifierProvider.notifier)
                   .updateField("name", "New Name");

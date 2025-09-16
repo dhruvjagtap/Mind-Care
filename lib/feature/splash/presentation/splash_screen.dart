@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../auth/presentation/auth_provider.dart';
 import '../../home/home_screen.dart';
-import '../../profile/presentation/onboarding_modal1.dart';
+import '../../auth/presentation/welcome_screen.dart'; // <-- new import
 import 'mind_care_loader.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class SplashScreen extends ConsumerWidget {
   const SplashScreen({super.key});
@@ -15,14 +15,17 @@ class SplashScreen extends ConsumerWidget {
     return FutureBuilder<bool>(
       future: _checkAuth(ref),
       builder: (context, snapshot) {
+        // Show MindCare loader while checking
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(body: MindCareLoader());
         }
 
+        // If user is logged in
         if (snapshot.data == true) {
           return const HomeScreen();
         } else {
-          return const OnboardingModal();
+          // If no user logged in, go to Welcome
+          return const WelcomeScreen();
         }
       },
     );
@@ -34,13 +37,13 @@ class SplashScreen extends ConsumerWidget {
     final prn = prefs.getString("prn");
 
     if (college != null && prn != null) {
-      // ✅ Update auth state
+      // Update Riverpod auth state
       ref.read(authStateProvider.notifier).state = StudentAuth(
         college: college,
         prn: prn,
       );
 
-      // ✅ Check Firestore if you want extra safety
+      // Optional: check Firestore to confirm onboarding
       final doc = await FirebaseFirestore.instance
           .collection("colleges")
           .doc(college)
@@ -48,9 +51,10 @@ class SplashScreen extends ConsumerWidget {
           .doc(prn)
           .get();
 
-      return doc.exists && (doc.data()?["isOnboarded"] ?? false);
+      // Return true if student exists and is onboarded
+      return doc.exists && (doc.data()?["isOnboarded"] ?? true);
     }
 
-    return false;
+    return false; // No user found
   }
 }
