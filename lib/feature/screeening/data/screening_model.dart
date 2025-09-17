@@ -1,12 +1,15 @@
+// lib/feature/screeening/data/screening_model.dart
 class ScreeningResult {
-  final String userId;
+  final String prn;
+  final String college;
   final String testType;
   final List<int> answers;
   final int score;
   final DateTime createdAt;
 
   ScreeningResult({
-    required this.userId,
+    required this.prn,
+    required this.college,
     required this.testType,
     required this.answers,
     required this.score,
@@ -14,7 +17,8 @@ class ScreeningResult {
   });
 
   Map<String, dynamic> toMap() => {
-    'userId': userId,
+    'prn': prn,
+    'college': college,
     'testType': testType,
     'answers': answers,
     'score': score,

@@ -27,12 +27,15 @@ final saveResultProvider = FutureProvider.family<void, String>((
 ) async {
   final repo = ref.read(screeningRepositoryProvider);
   final student = ref.read(authStateProvider);
-  final userId = "${student!.college}-${student.prn}";
+  if (student == null) throw Exception("Student profile not found");
+  final college = student.college;
+  final prn = student.prn;
   final answers = ref.read(answersProvider);
   final score = ref.read(scoreProvider);
 
   final result = ScreeningResult(
-    userId: userId,
+    prn: prn,
+    college: college,
     testType: testType,
     answers: answers,
     score: score,

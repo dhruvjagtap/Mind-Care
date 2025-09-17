@@ -2,23 +2,36 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../profile/presentation/profile_provider.dart';
+import '../../profile/data/profile_service.dart';
 
 class ForumService {
   final CollectionReference postsRef = FirebaseFirestore.instance.collection(
     'forums',
   );
 
+  /// 🔹 Get current student's profile (college + prn)
+  Future<Map<String, dynamic>> _getProfile() async {
+    final profile = await ProfileService().getProfile();
+    if (profile == null) throw Exception("Profile not found");
+    return profile;
+  }
+
+  /// 🔹 Send a forum message
   Future<void> sendMessage(
+    WidgetRef ref,
     String message, {
     Map<String, dynamic>? replyTo,
   }) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
+    final profile = await _getProfile();
+
     await postsRef.add({
       'message': message,
       'userId': user.uid,
+      'prn': profile['prn'],
+      'college': profile['college'],
       'createdAt': FieldValue.serverTimestamp(),
       'reactions': {},
       if (replyTo != null)
@@ -26,6 +39,8 @@ class ForumService {
           'messageId': replyTo['messageId'],
           'text': replyTo['text'],
           'userId': replyTo['userId'],
+          'prn': replyTo['prn'],
+          'college': replyTo['college'],
         },
     });
   }
@@ -102,18 +117,58 @@ class ForumService {
     String messageId,
     String reason,
   ) async {
-    final profile = ref.read(profileNotifierProvider);
-    final reporterPrn = profile['prn'];
+    final reporterProfile = await _getProfile();
 
-    if (reporterPrn == null || reporterPrn.toString().isEmpty) {
-      throw Exception("PRN not found in profile");
-    }
+    // fetch reported post
+    final postDoc = await postsRef.doc(messageId).get();
+    if (!postDoc.exists) throw Exception("Message not found");
+
+    final postData = postDoc.data() as Map<String, dynamic>;
 
     await FirebaseFirestore.instance.collection('reports').add({
       'messageId': messageId,
-      if (reason.isNotEmpty) 'reason': reason,
-      'reportedBy': reporterPrn,
+      'reason': reason,
+      'reportedByPrn': reporterProfile['prn'],
+      'reportedByCollege': reporterProfile['college'],
+      'reportedAgainstPrn': postData['prn'] ?? "unknown",
+      'reportedAgainstCollege': postData['college'] ?? "unknown",
       'createdAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  Future<void> reactPost(String postId, String emoji) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final profile = await _getProfile();
+    final postDoc = postsRef.doc(postId);
+
+    await FirebaseFirestore.instance.runTransaction((transaction) async {
+      final snapshot = await transaction.get(postDoc);
+      if (!snapshot.exists) return;
+
+      final data = snapshot.data() as Map<String, dynamic>;
+      final reactions = Map<String, dynamic>.from(data['reactions'] ?? {});
+
+      final currentReaction = reactions[user.uid];
+
+      if (currentReaction != null) {
+        // 🔹 If stored as String (old format)
+        final currentEmoji = currentReaction is String
+            ? currentReaction
+            : currentReaction['emoji'];
+
+        if (currentEmoji == emoji) {
+          reactions.remove(user.uid); // remove reaction
+        } else {
+          reactions[user.uid] = {'emoji': emoji, 'prn': profile['prn']};
+        }
+      } else {
+        // 🔹 No reaction yet → add new
+        reactions[user.uid] = {'emoji': emoji, 'prn': profile['prn']};
+      }
+
+      transaction.update(postDoc, {'reactions': reactions});
     });
   }
 

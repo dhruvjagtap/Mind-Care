@@ -1,3 +1,4 @@
+// lib/feature/screeening/data/screening_service.dart
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/screening_repository.dart';
 import '../data/screening_model.dart';
@@ -27,12 +28,15 @@ final saveResultProvider = FutureProvider.family<void, String>((
 ) async {
   final repo = ref.read(screeningRepositoryProvider);
   final student = ref.read(authStateProvider);
-  final userId = "${student!.college}-${student.prn}";
+  if (student == null) throw Exception("Student profile not found");
+  final college = student.college;
+  final prn = student.prn;
   final answers = ref.read(answersProvider);
   final score = ref.read(scoreProvider);
 
   final result = ScreeningResult(
-    userId: userId,
+    college: college,
+    prn: prn,
     testType: testType,
     answers: answers,
     score: score,

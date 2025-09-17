@@ -41,6 +41,7 @@ class _ForumScreenState extends ConsumerState<ForumScreen> {
       await ref
           .read(forumServiceProvider)
           .sendMessage(
+            ref,
             message,
             replyTo: _replyToMessageId != null
                 ? {'messageId': _replyToMessageId, 'text': _replyToMessageText}
@@ -72,21 +73,21 @@ class _ForumScreenState extends ConsumerState<ForumScreen> {
             IconButton(
               icon: const Text('👍', style: TextStyle(fontSize: 24)),
               onPressed: () {
-                ref.read(forumServiceProvider).reactToPost(postId, '👍');
+                ref.read(forumServiceProvider).reactPost(postId, '👍');
                 Navigator.pop(context);
               },
             ),
             IconButton(
               icon: const Text('❤️', style: TextStyle(fontSize: 24)),
               onPressed: () {
-                ref.read(forumServiceProvider).reactToPost(postId, '❤️');
+                ref.read(forumServiceProvider).reactPost(postId, '❤️');
                 Navigator.pop(context);
               },
             ),
             IconButton(
               icon: const Text('😂', style: TextStyle(fontSize: 24)),
               onPressed: () {
-                ref.read(forumServiceProvider).reactToPost(postId, '😂');
+                ref.read(forumServiceProvider).reactPost(postId, '😂');
                 Navigator.pop(context);
               },
             ),
@@ -154,7 +155,32 @@ class _ForumScreenState extends ConsumerState<ForumScreen> {
     );
   }
 
-  void _showReactionsDetails(Map<String, String> reactions) {
+  // void _showReactionsDetails(Map<String, dynamic> reactions) {
+  //   showModalBottomSheet(
+  //     context: context,
+  //     builder: (ctx) {
+  //       return ListView(
+  //         shrinkWrap: true,
+  //         children: reactions.entries.map((entry) {
+  //           final userId = entry.key;
+  //           final emoji = entry.value;
+
+  //           // Shorten userId for display (you can replace with profile name if available)
+  //           final shortUserId = userId.length > 6
+  //               ? userId.substring(0, 6)
+  //               : userId;
+
+  //           return ListTile(
+  //             leading: Text(emoji, style: const TextStyle(fontSize: 20)),
+  //             title: Text("User$shortUserId"),
+  //           );
+  //         }).toList(),
+  //       );
+  //     },
+  //   );
+  // }
+
+  void _showReactionsDetails(Map<String, dynamic> reactions) {
     showModalBottomSheet(
       context: context,
       builder: (ctx) {
@@ -162,9 +188,18 @@ class _ForumScreenState extends ConsumerState<ForumScreen> {
           shrinkWrap: true,
           children: reactions.entries.map((entry) {
             final userId = entry.key;
-            final emoji = entry.value;
+            final value = entry.value;
 
-            // Shorten userId for display (you can replace with profile name if available)
+            // 🔹 Support both old (string) and new (map) formats
+            String emoji;
+            if (value is String) {
+              emoji = value;
+            } else if (value is Map<String, dynamic>) {
+              emoji = value['emoji'] as String? ?? '';
+            } else {
+              emoji = '❓';
+            }
+
             final shortUserId = userId.length > 6
                 ? userId.substring(0, 6)
                 : userId;
@@ -322,15 +357,33 @@ class _ForumScreenState extends ConsumerState<ForumScreen> {
                   itemCount: messages.length,
                   itemBuilder: (context, index) {
                     final msg = messages[index];
-                    final isMe = msg['userId'] == currentUser?.uid;
-                    final shortUserId = (msg['userId'] as String).substring(
-                      0,
-                      6,
-                    );
                     final data = msg.data() as Map<String, dynamic>;
-                    final reactions = data.containsKey('reactions')
-                        ? Map<String, String>.from(data['reactions'])
-                        : <String, String>{};
+
+                    // 🔹 Safely get userId
+                    final userId = data['userId'] as String? ?? '';
+                    final isMe = userId == currentUser?.uid;
+                    final shortUserId = userId.length > 6
+                        ? userId.substring(0, 6)
+                        : userId;
+
+                    // 🔹 Safely get message text
+                    final messageText = data['message'] as String? ?? '';
+
+                    // 🔹 Safely get reply info
+                    String? replyText;
+                    if (data.containsKey('replyTo') && data['replyTo'] is Map) {
+                      final replyMap = Map<String, dynamic>.from(
+                        data['replyTo'],
+                      );
+                      replyText = replyMap['text'] as String? ?? '';
+                    }
+
+                    // 🔹 Safely get reactions
+                    final reactions =
+                        data.containsKey('reactions') &&
+                            data['reactions'] is Map
+                        ? Map<String, dynamic>.from(data['reactions'])
+                        : <String, dynamic>{};
 
                     return Align(
                       alignment: isMe
@@ -353,16 +406,14 @@ class _ForumScreenState extends ConsumerState<ForumScreen> {
                         onHorizontalDragEnd: (details) {
                           if (details.primaryVelocity != null) {
                             if (isMe && details.primaryVelocity! < 0) {
-                              // Swiped left on own message
                               setState(() {
                                 _replyToMessageId = msg.id;
-                                _replyToMessageText = msg['message'];
+                                _replyToMessageText = messageText;
                               });
                             } else if (!isMe && details.primaryVelocity! > 0) {
-                              // Swiped right on someone else's message
                               setState(() {
                                 _replyToMessageId = msg.id;
-                                _replyToMessageText = msg['message'];
+                                _replyToMessageText = messageText;
                               });
                             }
                           }
@@ -375,9 +426,7 @@ class _ForumScreenState extends ConsumerState<ForumScreen> {
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
                             color: _selectedMessages.contains(msg.id)
-                                ? Colors.blue.withOpacity(
-                                    0.3,
-                                  ) // highlight if selected
+                                ? Colors.blue.withOpacity(0.3)
                                 : (isMe
                                       ? Colors.blue
                                       : theme.colorScheme.surfaceVariant),
@@ -388,7 +437,7 @@ class _ForumScreenState extends ConsumerState<ForumScreen> {
                                 ? CrossAxisAlignment.end
                                 : CrossAxisAlignment.start,
                             children: [
-                              if (data.containsKey('replyTo'))
+                              if (replyText != null && replyText.isNotEmpty)
                                 Container(
                                   margin: const EdgeInsets.only(bottom: 4),
                                   padding: const EdgeInsets.all(6),
@@ -397,7 +446,7 @@ class _ForumScreenState extends ConsumerState<ForumScreen> {
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: Text(
-                                    data['replyTo']['text'] ?? '',
+                                    replyText,
                                     style: const TextStyle(
                                       fontSize: 12,
                                       fontStyle: FontStyle.italic,
@@ -405,7 +454,7 @@ class _ForumScreenState extends ConsumerState<ForumScreen> {
                                   ),
                                 ),
                               Text(
-                                msg['message'],
+                                messageText,
                                 style: theme.textTheme.bodyMedium,
                               ),
                               const SizedBox(height: 4),
@@ -420,20 +469,21 @@ class _ForumScreenState extends ConsumerState<ForumScreen> {
                                 Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: (() {
-                                    // 🔹 Count how many times each emoji appears
                                     final Map<String, int> counts = {};
-                                    for (final emoji in reactions.values) {
+                                    for (final reaction in reactions.values) {
+                                      final emoji = reaction is String
+                                          ? reaction
+                                          : (reaction['emoji'] ?? '');
+                                      if (emoji.isEmpty) continue;
                                       counts[emoji] = (counts[emoji] ?? 0) + 1;
                                     }
 
-                                    // 🔹 Render each emoji with its count
                                     return counts.entries.map((entry) {
                                       final emoji = entry.key;
                                       final count = entry.value;
                                       return GestureDetector(
-                                        onTap: () => _showReactionsDetails(
-                                          reactions,
-                                        ), // 👈 new function
+                                        onTap: () =>
+                                            _showReactionsDetails(reactions),
                                         child: Padding(
                                           padding: const EdgeInsets.symmetric(
                                             horizontal: 4,

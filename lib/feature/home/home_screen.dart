@@ -10,7 +10,9 @@ import '../forum/presentation/forum_screen.dart';
 import '../analytics/analytics_service.dart';
 import '../auth/data/auth_service.dart';
 import '../auth/presentation/auth_provider.dart';
+import 'data/mood_service.dart';
 import '../auth/presentation/welcome_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -37,11 +39,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       DateTime.now().millisecondsSinceEpoch,
     );
 
+    // Map emoji to number
+    int moodValue = switch (mood) {
+      "happy" => 2,
+      "neutral" => 1,
+      "sad" => 0,
+      _ => 1, // default to neutral
+    };
+
+    final student = ref.read(authStateProvider);
+    if (student == null) throw Exception("Student not found");
+
+    // Save mood as number
+    await MoodCheckService().saveMood(student.prn, student.college, moodValue);
+
+    // Log analytics
     await analyticsService.logEvent(
       "mood_selected",
-      params: {"mood": mood, "timestamp": DateTime.now().toIso8601String()},
+      params: {"mood": moodValue, "timestamp": FieldValue.serverTimestamp()},
     );
-
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => ChatbotScreen(initialMood: mood)),
