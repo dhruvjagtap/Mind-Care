@@ -3,11 +3,12 @@ import 'package:digital_mental_health_app/feature/auth/presentation/register_scr
 import 'package:digital_mental_health_app/feature/booking/presentation/booking_screen.dart';
 import 'package:digital_mental_health_app/feature/resources/presenetation/resources_screen.dart';
 import 'package:digital_mental_health_app/feature/screeening/presentation/screening_screen.dart';
-import 'package:digital_mental_health_app/feature/splash/presentation/splash_screen.dart';
-import 'package:digital_mental_health_app/feature/theme/presentation/theme_provider.dart';
+import 'package:digital_mental_health_app/core/splash/presentation/splash_screen.dart';
+import 'package:digital_mental_health_app/core/theme/presentation/theme_provider.dart';
 import 'package:digital_mental_health_app/feature/profile/presentation/profile_screen.dart';
 import 'package:digital_mental_health_app/feature/chatbot/chat_bot_screen.dart';
 import 'package:digital_mental_health_app/feature/forum/presentation/forum_screen.dart';
+import 'package:digital_mental_health_app/core/notifications/notification_service.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -17,6 +18,7 @@ import 'firebase_options.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await NotificationService().init();
 
   runApp(
     const ProviderScope(

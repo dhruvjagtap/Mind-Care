@@ -50,7 +50,7 @@ class WelcomeScreen extends StatelessWidget {
                 // Register button
                 SizedBox(
                   width: double.infinity,
-                  child: OutlinedButton(
+                  child: ElevatedButton(
                     onPressed: () => _goToRegister(context),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 14),

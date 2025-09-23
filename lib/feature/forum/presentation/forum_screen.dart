@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'forum_provider.dart';
+import 'dart:convert';
+import 'package:crypto/crypto.dart';
+import '../../profile/data/profile_service.dart';
 
 final forumMessagesProvider = StreamProvider<QuerySnapshot>((ref) {
   final forumRef = FirebaseFirestore.instance.collection('forums');
@@ -25,6 +28,24 @@ class _ForumScreenState extends ConsumerState<ForumScreen> {
   String? _replyToMessageText;
   final Set<String> _selectedMessages = {};
   bool _selectionMode = false;
+
+  String? _currentPrn;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    final profile = await ProfileService()
+        .getProfile(); // same as forum_service
+    if (mounted) {
+      setState(() {
+        _currentPrn = profile?['prn'];
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -214,6 +235,17 @@ class _ForumScreenState extends ConsumerState<ForumScreen> {
     );
   }
 
+  String getPrnHash(String prn) {
+    if (prn.isEmpty) return "Unknown";
+
+    // Generate SHA256 hash of PRN
+    final bytes = utf8.encode(prn);
+    final digest = sha256.convert(bytes).toString();
+
+    // Take first 6 characters as short ID
+    return digest.substring(0, 6);
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -360,11 +392,12 @@ class _ForumScreenState extends ConsumerState<ForumScreen> {
                     final data = msg.data() as Map<String, dynamic>;
 
                     // 🔹 Safely get userId
-                    final userId = data['userId'] as String? ?? '';
-                    final isMe = userId == currentUser?.uid;
-                    final shortUserId = userId.length > 6
-                        ? userId.substring(0, 6)
-                        : userId;
+                    // final userId = data['userId'] as String? ?? '';
+                    // final isMe = userId == currentUser?.uid;
+                    final prn = data['prn'] as String? ?? '';
+                    final isMe = prn == _currentPrn;
+
+                    final shortUserId = getPrnHash(prn);
 
                     // 🔹 Safely get message text
                     final messageText = data['message'] as String? ?? '';

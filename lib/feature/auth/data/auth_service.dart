@@ -1,11 +1,13 @@
 // lib/feature/auth/data/auth_service.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 class AuthService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   /// 1. Login with PRN + PIN
+
   Future<Map<String, dynamic>?> loginWithPRN(
     String college,
     String prn,
@@ -21,14 +23,30 @@ class AuthService {
     if (!doc.exists) return null;
 
     final data = doc.data()!;
-    if (data["pinHash"] == pin) {
-      // ✅ Save session locally
+    final firebasePrn = data["prn"];
+    final firebasePin = data["pinHash"];
+
+    if (firebasePrn == prn && firebasePin == pin) {
+      // Save session
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString("college", college);
       await prefs.setString("prn", prn);
+
+      final token = await FirebaseMessaging.instance.getToken();
+
+      if (token != null) {
+        await _firestore
+            .collection("colleges")
+            .doc(college)
+            .collection("students")
+            .doc(prn)
+            .update({"deviceToken": token});
+      }
+
       return data;
     }
-    return null;
+
+    return null; // invalid PRN or PIN
   }
 
   /// 2. Register new student (during onboarding)
@@ -39,6 +57,7 @@ class AuthService {
     required String name,
     required List<String> hobbies,
   }) async {
+    final token = await FirebaseMessaging.instance.getToken();
     await _firestore
         .collection("colleges")
         .doc(college)
@@ -52,6 +71,7 @@ class AuthService {
           "hobbies": hobbies,
           "isOnboarded": true,
           "createdAt": FieldValue.serverTimestamp(),
+          "deviceToken": token,
         });
 
     // ✅ Save session locally

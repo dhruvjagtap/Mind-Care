@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import './resource_provider.dart';
-import '../../analytics/analytics_service.dart';
+import '../../analytics/data/analytics_service.dart';
 import '../../profile/data/profile_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 

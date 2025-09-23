@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'screening_provider.dart';
 import 'screening_result_screen.dart';
-import '../../analytics/analytics_service.dart';
+import '../../analytics/data/analytics_service.dart';
 
 class Phq9TestScreen extends ConsumerWidget {
   static const routeName = '/phq9';
@@ -29,17 +29,17 @@ class Phq9TestScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final answers = ref.watch(answersProvider);
+    final theme = Theme.of(context);
+    final answers = ref.watch(answersProviderForTest("PHQ-9"));
 
     return WillPopScope(
       onWillPop: () async {
-        // 👉 if user answered something but didn’t finish, log abandoned
         if (answers.isNotEmpty && answers.length < questions.length) {
           analyticsService.logEvent(
             "screening_abandoned",
             params: {
               "type": "PHQ9",
-              "progress": answers.length, // how many answered
+              "progress": answers.length,
               "timestamp": DateTime.now().toIso8601String(),
             },
           );
@@ -79,7 +79,7 @@ class Phq9TestScreen extends ConsumerWidget {
                             } else {
                               newAnswers.add(value!);
                             }
-                            ref.read(answersProvider.notifier).state =
+                            ref.read(phq9AnswersProvider.notifier).state =
                                 newAnswers;
                           },
                         );
@@ -94,15 +94,29 @@ class Phq9TestScreen extends ConsumerWidget {
         bottomNavigationBar: Padding(
           padding: const EdgeInsets.all(16),
           child: ElevatedButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const ScreeningResultScreen(),
-                ),
-              );
-            },
-            child: const Text("Submit"),
+            onPressed: answers.length == questions.length
+                ? () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const ScreeningResultScreen(),
+                      ),
+                    );
+                  }
+                : null, // disables button if not all answered
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              backgroundColor: theme.colorScheme.primary,
+            ),
+
+            child: Text(
+              "Submit (${answers.length}/${questions.length})",
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.black
+                    : Colors.white,
+              ),
+            ),
           ),
         ),
       ),

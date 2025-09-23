@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../theme/presentation/theme_provider.dart';
+import '../../../core/theme/presentation/theme_provider.dart';
+import '../../auth/data/auth_service.dart';
+import '../../auth/presentation/auth_provider.dart';
+import '../../auth/presentation/welcome_screen.dart';
 import 'profile_provider.dart';
 
 class ProfileScreen extends ConsumerWidget {
@@ -14,7 +17,31 @@ class ProfileScreen extends ConsumerWidget {
     final currentTheme = ref.watch(themeModeProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text("My Profile")),
+      appBar: AppBar(
+        title: const Text("My Profile"),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () async {
+              final authService = AuthService();
+
+              // 1. Clear prefs
+              await authService.logout();
+
+              // 2. Clear provider state
+              ref.read(authStateProvider.notifier).state = null;
+
+              // 3. Navigate back to WelcomeScreen
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+                (route) => false,
+              );
+            },
+          ),
+        ],
+      ),
+
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

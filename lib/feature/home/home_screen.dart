@@ -1,18 +1,22 @@
 import 'package:digital_mental_health_app/feature/profile/presentation/profile_screen.dart';
 import 'package:digital_mental_health_app/feature/resources/presenetation/resources_screen.dart';
 import 'package:digital_mental_health_app/feature/screeening/presentation/screening_screen.dart';
-import 'package:flutter/material.dart';
+import 'package:digital_mental_health_app/feature/activities/presentation/activities_screen.dart';
+import 'package:digital_mental_health_app/feature/analytics/presentation/analytics_screen.dart';
+import 'package:digital_mental_health_app/feature/booking/presentation/booking_screen.dart';
+import 'package:digital_mental_health_app/feature/diary/presentation/diary_screen.dart';
+import 'package:digital_mental_health_app/feature/forum/presentation/forum_screen.dart';
+import 'package:digital_mental_health_app/feature/analytics/data/analytics_service.dart';
+import 'package:digital_mental_health_app/feature/auth/presentation/auth_provider.dart';
+import 'package:digital_mental_health_app/feature/home/data/mood_service.dart';
+import 'package:digital_mental_health_app/feature/chatbot/chat_bot_screen.dart';
+import 'package:digital_mental_health_app/core/notifications/notification_modal.dart';
+import 'package:digital_mental_health_app/core/notifications/notification_model.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../chatbot/chat_bot_screen.dart';
-import '../booking/presentation/booking_screen.dart';
-import '../forum/presentation/forum_screen.dart';
-import '../analytics/analytics_service.dart';
-import '../auth/data/auth_service.dart';
-import '../auth/presentation/auth_provider.dart';
-import 'data/mood_service.dart';
-import '../auth/presentation/welcome_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -33,39 +37,49 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Future<void> _saveMoodCheck(BuildContext context, String mood) async {
+    // Immediately hide the modal
+    setState(() {
+      _showMoodCheck = false;
+    });
+
+    // Save timestamp in SharedPreferences
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(
       "last_mood_check",
       DateTime.now().millisecondsSinceEpoch,
     );
 
-    // Map emoji to number
+    // Map mood to number
     int moodValue = switch (mood) {
-      "happy" => 2,
-      "neutral" => 1,
-      "sad" => 0,
-      _ => 1, // default to neutral
+      "happy" => 1,
+      "neutral" => 0,
+      "sad" => -1,
+      _ => 0,
     };
 
     final student = ref.read(authStateProvider);
     if (student == null) throw Exception("Student not found");
 
-    // Save mood as number
-    await MoodCheckService().saveMood(student.prn, student.college, moodValue);
-
-    // Log analytics
-    await analyticsService.logEvent(
-      "mood_selected",
-      params: {"mood": moodValue, "timestamp": FieldValue.serverTimestamp()},
-    );
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => ChatbotScreen(initialMood: mood)),
-    );
-
-    setState(() {
-      _showMoodCheck = false;
+    // Fire-and-forget async saves (don't block UI)
+    Future.microtask(() async {
+      await MoodCheckService().saveMood(
+        student.prn,
+        student.college,
+        moodValue,
+      );
+      await analyticsService.logEvent(
+        "mood_selected",
+        params: {"mood": moodValue, "timestamp": FieldValue.serverTimestamp()},
+      );
     });
+
+    // Navigate ONLY if mood is sad
+    if (mood == "sad") {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => ChatbotScreen(initialMood: mood)),
+      );
+    }
   }
 
   Future<void> _checkMoodVisibility() async {
@@ -91,22 +105,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         title: const Text('Home'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () async {
-              final authService = AuthService();
-
-              // 1. Clear prefs
-              await authService.logout();
-
-              // 2. Clear provider state
-              ref.read(authStateProvider.notifier).state = null;
-
-              // 3. Navigate back to WelcomeScreen
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (_) => const WelcomeScreen()),
-                (route) => false,
-              );
+            icon: const Icon(Icons.notifications),
+            onPressed: () {
+              // Fetch notifications from Firestore or local cache
+              final notifications =
+                  <NotificationModel>[]; // Replace with real data
+              showNotificationModal(context, notifications);
             },
           ),
         ],
@@ -184,6 +188,47 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                     );
                   }),
+
+                  _buildFeatureCard(context, Icons.analytics, "Analytics", () {
+                    // Navigate to Profile screen
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AnalyticsScreen(),
+                      ),
+                    );
+                  }),
+
+                  _buildFeatureCard(
+                    context,
+                    Icons.book_outlined,
+                    "Daily Diary",
+                    () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const DiaryScreen(),
+                        ),
+                      );
+                    },
+                  ),
+
+                  _buildFeatureCard(
+                    context,
+                    Icons.games,
+                    "Mini Activities",
+                    () {
+                      // Navigate to Profile screen
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ActivitiesScreen(),
+                        ),
+                      );
+                    },
+                  ),
+
+                  // Profile
                   _buildFeatureCard(context, Icons.person, "Profile", () {
                     // Navigate to Profile screen
                     Navigator.push(

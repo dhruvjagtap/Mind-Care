@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../analytics/analytics_service.dart';
+import '../analytics/data/analytics_service.dart';
 
 class ChatbotScreen extends StatefulWidget {
   final String initialMood;
@@ -31,12 +31,6 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
 
     // Set intro message based on mood
     switch (widget.initialMood) {
-      case "happy":
-        introMessage = "Hi! Want to chat or explore resources today?";
-        break;
-      case "neutral":
-        introMessage = "😐 Okay! Want to talk about how your day is going?";
-        break;
       case "sad":
         introMessage =
             "🙁 I’m here for you. Want to share what’s on your mind?";
