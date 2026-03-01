@@ -62,6 +62,7 @@ class MyApp extends ConsumerWidget {
         useMaterial3: true,
       ),
       debugShowCheckedModeBanner: false,
+
       home: const SplashScreen(),
 
       routes: {

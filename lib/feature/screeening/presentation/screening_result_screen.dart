@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:model_viewer_plus/model_viewer_plus.dart'; // 👈 for 3D character
+// import 'package:model_viewer_plus/model_viewer_plus.dart'; // 👈 for 3D character
 import 'screening_provider.dart';
+import 'package:o3d/o3d.dart';
 import '../../analytics/data/analytics_service.dart';
 
 class ScreeningResultScreen extends ConsumerWidget {
@@ -67,6 +68,8 @@ class ScreeningResultScreen extends ConsumerWidget {
       },
     );
 
+    O3DController o3dController = O3DController();
+
     return Scaffold(
       appBar: AppBar(title: const Text("Your Result")),
       body: Padding(
@@ -74,14 +77,25 @@ class ScreeningResultScreen extends ConsumerWidget {
         child: Column(
           children: [
             // 🔹 3D Character
-            Expanded(
-              child: ModelViewer(
-                src: 'assets/character.glb', // 👈 put your 3D model here
-                alt: "3D Character",
+            // Expanded(
+            //   child: ModelViewer(
+            //     src: 'assets/character.glb', // 👈 put your 3D model here
+            //     alt: "3D Character",
+            //     autoRotate: true,
+            //     cameraControls: false,
+            //   ),
+            // ),
+            SizedBox(
+              height: 300, // or Expanded if you prefer full space
+              child: O3D.asset(
+                src: 'assets/character.glb',
+                controller: o3dController,
+                ar: false,
                 autoRotate: true,
-                cameraControls: false,
+                autoPlay: true,
               ),
             ),
+
             const SizedBox(height: 20),
 
             // 🔹 Quote Bubble

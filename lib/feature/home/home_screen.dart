@@ -12,11 +12,14 @@ import 'package:digital_mental_health_app/feature/home/data/mood_service.dart';
 import 'package:digital_mental_health_app/feature/chatbot/chat_bot_screen.dart';
 import 'package:digital_mental_health_app/core/notifications/notification_modal.dart';
 import 'package:digital_mental_health_app/core/notifications/notification_model.dart';
+import 'package:digital_mental_health_app/feature/calendar/presentation/smart_calendar_screen.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_3d_controller/flutter_3d_controller.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:o3d/o3d.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -26,11 +29,14 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   bool _showMoodCheck = false;
+  late O3DController o3dController;
+  Flutter3DController controller = Flutter3DController();
 
   @override
   void initState() {
     super.initState();
     _checkMoodVisibility();
+    o3dController = O3DController();
 
     // Log screen view for analytics
     analyticsService.logScreenView("home_screen");
@@ -105,16 +111,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         title: const Text('Home'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications),
+            icon: Icon(Icons.notifications, color: theme.colorScheme.primary),
             onPressed: () {
-              // Fetch notifications from Firestore or local cache
               final notifications =
                   <NotificationModel>[]; // Replace with real data
               showNotificationModal(context, notifications);
             },
           ),
+          IconButton(
+            icon: Icon(
+              Icons.person,
+              color: theme.colorScheme.primary,
+            ), // 👤 Profile Icon
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ProfileScreen()),
+              );
+            },
+          ),
         ],
       ),
+
       body: Padding(
         padding: EdgeInsets.all(8),
         child: SingleChildScrollView(
@@ -229,20 +247,58 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
 
                   // Profile
-                  _buildFeatureCard(context, Icons.person, "Profile", () {
-                    // Navigate to Profile screen
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const ProfileScreen(),
-                      ),
-                    );
-                  }),
+                  _buildFeatureCard(
+                    context,
+                    Icons.calendar_month,
+                    "S Calendar",
+                    () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const SmartCalendarScreen(),
+                        ),
+                      );
+                    },
+                  ),
                 ],
               ),
 
               const SizedBox(height: 16),
 
+              // SizedBox(
+              //   height: 200, // or Expanded if you prefer full space
+              //   child: O3D.asset(
+              //     src: 'assets/HiiChibli.glb',
+              //     controller: o3dController,
+              //     ar: false,
+              //     autoRotate: true,
+              //     autoPlay: true,
+              //   ),
+              // ),
+              // ====================================================================================================
+              // SizedBox(
+              //   height: 200,
+              //   child: Flutter3DViewer(
+              //     controller: controller,
+              //     src: 'assets/character.glb',
+              //     onLoad: (String modelAddress) async {
+              //       debugPrint('Model loaded: $modelAddress');
+
+              //       final animations = await controller
+              //           .getAvailableAnimations();
+              //       debugPrint("Available animations: $animations");
+
+              //       if (animations.isNotEmpty) {
+              //         controller
+              //             .playAnimation(); // optionally specify animation name
+              //       }
+              //     },
+              //     onError: (String error) {
+              //       debugPrint('Model failed to load: $error');
+              //     },
+              //   ),
+              // ),
+              // ==========================================================================================================================---------------
               SizedBox(
                 height: 450,
                 child: ListView(
@@ -251,11 +307,34 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     // Mood Check
                     if (_showMoodCheck) _buildMoodCheckIn(theme),
 
+                    SizedBox(
+                      height: 200,
+                      child: Flutter3DViewer(
+                        controller: controller,
+                        src: 'assets/character.glb',
+                        onLoad: (String modelAddress) async {
+                          debugPrint('Model loaded: $modelAddress');
+
+                          final animations = await controller
+                              .getAvailableAnimations();
+                          debugPrint("Available animations: $animations");
+
+                          if (animations.isNotEmpty) {
+                            controller
+                                .playAnimation(); // optionally specify animation name
+                          }
+                        },
+                        onError: (String error) {
+                          debugPrint('Model failed to load: $error');
+                        },
+                      ),
+                    ),
+
                     const SizedBox(height: 16),
 
                     // 4. Featured Resource
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(8, 0, 16, 8),
+                      padding: const EdgeInsets.fromLTRB(8, 0, 16, 16),
                       child: Text(
                         'From resources',
                         style: theme.textTheme.titleMedium,
